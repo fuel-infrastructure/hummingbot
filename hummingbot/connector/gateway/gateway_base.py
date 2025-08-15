@@ -5,7 +5,7 @@ import logging
 import re
 import time
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Union, cast
+from typing import Any, Dict, List, Optional, Set, Union, cast
 
 from hummingbot.client.settings import GatewayConnectionSetting
 from hummingbot.connector.client_order_tracker import ClientOrderTracker
@@ -21,9 +21,6 @@ from hummingbot.core.network_iterator import NetworkStatus
 from hummingbot.core.utils.async_utils import safe_ensure_future, safe_gather
 from hummingbot.core.utils.tracking_nonce import get_tracking_nonce
 from hummingbot.logger import HummingbotLogger
-
-if TYPE_CHECKING:
-    from hummingbot.client.config.config_helpers import ClientConfigAdapter
 
 s_logger = None
 s_decimal_0 = Decimal("0")
@@ -63,11 +60,11 @@ class GatewayBase(ConnectorBase):
     _get_allowances_task: Optional[asyncio.Task]
 
     def __init__(self,
-                 client_config_map: "ClientConfigAdapter",
                  connector_name: str,
                  chain: str,
                  network: str,
                  address: str,
+                 balance_asset_limit: Optional[Dict[str, Dict[str, Decimal]]] = None,
                  trading_pairs: List[str] = [],
                  trading_required: bool = True
                  ):
@@ -81,7 +78,7 @@ class GatewayBase(ConnectorBase):
         """
         self._connector_name = connector_name
         self._name = f"{connector_name}_{chain}_{network}"
-        super().__init__(client_config_map)
+        super().__init__(balance_asset_limit)
         self._chain = chain
         self._network = network
         self._trading_pairs = trading_pairs
