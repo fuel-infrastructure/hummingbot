@@ -30,9 +30,10 @@ WSS_PRIVATE_URL = {
     "bitget_main": "wss://ws.bitget.com/v2/ws/private",
 }
 
-# API request timeout settings
+# Request timeout and interval settings
 REQUEST_TIMEOUT = 10.0
 WS_HEARTBEAT_TIME_INTERVAL = 30.0
+WS_MAX_CONNECTIONS = 100
 
 # Bitget product type
 INST_TYPE = "SPOT"
@@ -94,7 +95,6 @@ ONE_MINUTE = 60
 
 # Generic rate limits (to be updated with actual Bitget limits)
 MAX_REQUEST_LIMIT_DEFAULT = 600  # placeholder - needs verification
-MAX_WS_CONNECTIONS = 5
 
 # Define rate limits based on Bitget API documentation
 # Note: These are estimated values and should be verified against official documentation
