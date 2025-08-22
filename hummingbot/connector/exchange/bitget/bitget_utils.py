@@ -30,7 +30,7 @@ class BitgetConfigMap(BaseConnectorConfigMap):
     bitget_api_key: SecretStr = Field(
         default=...,
         json_schema_extra={
-            "prompt": lambda cm: "Enter your Bitget API key",
+            "prompt": "Enter your Bitget API key",
             "is_secure": True,
             "is_connect_key": True,
             "prompt_on_new": True,
@@ -39,10 +39,19 @@ class BitgetConfigMap(BaseConnectorConfigMap):
     bitget_api_secret: SecretStr = Field(
         default=...,
         json_schema_extra={
-            "prompt": lambda cm: "Enter your Bitget API secret",
+            "prompt": "Enter your Bitget API secret",
             "is_secure": True,
             "is_connect_key": True,
             "prompt_on_new": True,
+        }
+    )
+    bitget_passphrase: SecretStr = Field(
+        default=...,
+        json_schema_extra={
+            "prompt": "Enter your Bitget passphrase",
+            "is_secure": True,
+            "is_connect_key": True,
+            "prompt_on_new": True
         }
     )
     model_config = ConfigDict(title="bitget")
