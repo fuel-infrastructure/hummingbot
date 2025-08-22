@@ -142,3 +142,31 @@ def format_trading_pair(base: str, quote: str) -> str:
     Formats base and quote assets into a trading pair
     """
     return f"{base.upper()}-{quote.upper()}"
+
+def format_symbol_for_exchange(trading_pair: str) -> str:
+    """
+    Converts trading pair format to exchange symbol format
+    Example: BTC-USDT -> BTCUSDT
+    """
+    return trading_pair.replace("-", "")
+
+
+def is_rest_response_success(response: Dict[str, Any]) -> bool:
+    """
+    Checks if a REST API response is successful
+    """
+    return response.get("code") == CONSTANTS.RET_CODE_OK
+
+
+def get_rest_response_error_message(response: Dict[str, Any]) -> str:
+    """
+    Extracts error message from REST API response
+    """
+    return response.get("msg", "Unknown error")
+
+
+def get_rest_response_data(response: Dict[str, Any]) -> Any:
+    """
+    Extracts data from REST API response
+    """
+    return response.get("data")
