@@ -113,11 +113,11 @@ class BitgetExchange(ExchangePyBase):
 
     @property
     def trading_rules_request_path(self):
-        return CONSTANTS.EXCHANGE_INFO_PATH_URL
+        return CONSTANTS.SYMBOL_INFO_PATH_URL
 
     @property
     def trading_pairs_request_path(self):
-        return CONSTANTS.EXCHANGE_INFO_PATH_URL
+        return CONSTANTS.SYMBOL_INFO_PATH_URL
 
     @property
     def check_network_request_path(self):
@@ -198,7 +198,7 @@ class BitgetExchange(ExchangePyBase):
             api_params["timeInForce"] = CONSTANTS.TIME_IN_FORCE_GTC
 
         response = await self._api_request(
-            path_url=CONSTANTS.ORDER_PLACE_PATH_URL,
+            path_url=CONSTANTS.PLACE_ORDER_PATH_URL,
             method=RESTMethod.POST,
             data=api_params,
             is_auth_required=True,
@@ -222,7 +222,7 @@ class BitgetExchange(ExchangePyBase):
         }
 
         response = await self._api_request(
-            path_url=CONSTANTS.ORDER_CANCEL_PATH_URL,
+            path_url=CONSTANTS.CANCEL_ORDER_PATH_URL,
             method=RESTMethod.POST,
             data=api_params,
             is_auth_required=True,
@@ -302,7 +302,7 @@ class BitgetExchange(ExchangePyBase):
         """
         try:
             response = await self._api_request(
-                path_url=CONSTANTS.BALANCE_PATH_URL,
+                path_url=CONSTANTS.ACCOUNT_ASSETS_PATH_URL,
                 method=RESTMethod.GET,
                 is_auth_required=True,
             )
@@ -335,7 +335,7 @@ class BitgetExchange(ExchangePyBase):
             }
 
             response = await self._api_request(
-                path_url=CONSTANTS.TRADE_HISTORY_PATH_URL,
+                path_url=CONSTANTS.FILLS_HISTORY_PATH_URL,
                 method=RESTMethod.GET,
                 params=params,
                 is_auth_required=True,
@@ -386,7 +386,7 @@ class BitgetExchange(ExchangePyBase):
             }
 
             response = await self._api_request(
-                path_url=CONSTANTS.GET_ORDER_PATH_URL,
+                path_url=CONSTANTS.ORDER_INFO_PATH_URL,
                 method=RESTMethod.GET,
                 params=params,
                 is_auth_required=True,

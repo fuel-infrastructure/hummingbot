@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 class BitgetAPIUserStreamDataSource(UserStreamTrackerDataSource):
-    HEARTBEAT_TIME_INTERVAL = 30.0
+    HEARTBEAT_TIME_INTERVAL = CONSTANTS.WS_HEARTBEAT_TIME_INTERVAL  # 30 seconds as per official docs
 
     _logger: Optional[HummingbotLogger] = None
 
@@ -61,10 +61,12 @@ class BitgetAPIUserStreamDataSource(UserStreamTrackerDataSource):
         """
         Creates and connects a WebSocket assistant for private streams
         """
-        ws: WSAssistant = await self._api_factory.get_ws_assistant()
-        url = web_utils.wss_url(domain=self._domain, private=True)
-        await ws.connect(ws_url=url, ping_timeout=CONSTANTS.WS_HEARTBEAT_TIME_INTERVAL)
-        return ws
+        # Apply WebSocket connection rate limiting
+        async with self._api_factory.throttler.execute_task(limit_id=CONSTANTS.WS_CONNECTION_LIMIT_ID):
+            ws: WSAssistant = await self._api_factory.get_ws_assistant()
+            url = web_utils.wss_url(domain=self._domain, private=True)
+            await ws.connect(ws_url=url, ping_timeout=CONSTANTS.WS_HEARTBEAT_TIME_INTERVAL)
+            return ws
 
     async def _authenticate(self, ws: WSAssistant):
         """
@@ -84,41 +86,44 @@ class BitgetAPIUserStreamDataSource(UserStreamTrackerDataSource):
         Subscribes to private channels
         """
         try:
-            # Subscribe to order updates
-            order_payload = {
-                "op": "subscribe",
-                "args": [{
-                    "instType": "SPOT",
-                    "channel": CONSTANTS.WS_SUBSCRIPTION_ORDERS_ENDPOINT_NAME,
-                    "instId": "default"
-                }]
-            }
-            subscribe_order_request = WSJSONRequest(payload=order_payload)
-            await ws.send(subscribe_order_request)
+            # Subscribe to order updates with rate limiting
+            async with self._api_factory.throttler.execute_task(limit_id=CONSTANTS.WS_REQUEST_LIMIT_ID):
+                order_payload = {
+                    "op": "subscribe",
+                    "args": [{
+                        "instType": "SPOT",
+                        "channel": CONSTANTS.WS_SUBSCRIPTION_ORDERS_ENDPOINT_NAME,
+                        "instId": "default"
+                    }]
+                }
+                subscribe_order_request = WSJSONRequest(payload=order_payload)
+                await ws.send(subscribe_order_request)
 
-            # Subscribe to trade fills
-            fill_payload = {
-                "op": "subscribe",
-                "args": [{
-                    "instType": "SPOT",
-                    "channel": CONSTANTS.WS_SUBSCRIPTION_EXECUTIONS_ENDPOINT_NAME,
-                    "instId": "default"
-                }]
-            }
-            subscribe_fill_request = WSJSONRequest(payload=fill_payload)
-            await ws.send(subscribe_fill_request)
+            # Subscribe to trade fills with rate limiting
+            async with self._api_factory.throttler.execute_task(limit_id=CONSTANTS.WS_REQUEST_LIMIT_ID):
+                fill_payload = {
+                    "op": "subscribe",
+                    "args": [{
+                        "instType": "SPOT",
+                        "channel": CONSTANTS.WS_SUBSCRIPTION_EXECUTIONS_ENDPOINT_NAME,
+                        "instId": "default"
+                    }]
+                }
+                subscribe_fill_request = WSJSONRequest(payload=fill_payload)
+                await ws.send(subscribe_fill_request)
 
-            # Subscribe to balance updates
-            balance_payload = {
-                "op": "subscribe",
-                "args": [{
-                    "instType": "SPOT",
-                    "channel": CONSTANTS.WS_SUBSCRIPTION_WALLET_ENDPOINT_NAME,
-                    "instId": "default"
-                }]
-            }
-            subscribe_balance_request = WSJSONRequest(payload=balance_payload)
-            await ws.send(subscribe_balance_request)
+            # Subscribe to balance updates with rate limiting
+            async with self._api_factory.throttler.execute_task(limit_id=CONSTANTS.WS_REQUEST_LIMIT_ID):
+                balance_payload = {
+                    "op": "subscribe",
+                    "args": [{
+                        "instType": "SPOT",
+                        "channel": CONSTANTS.WS_SUBSCRIPTION_WALLET_ENDPOINT_NAME,
+                        "instId": "default"
+                    }]
+                }
+                subscribe_balance_request = WSJSONRequest(payload=balance_payload)
+                await ws.send(subscribe_balance_request)
 
             self.logger().info("Subscribed to private channels")
 
@@ -150,15 +155,20 @@ class BitgetAPIUserStreamDataSource(UserStreamTrackerDataSource):
         Sends ping message to keep WebSocket connection alive
         """
         try:
-            ping_request = WSJSONRequest(payload={"op": "ping"})
-            await websocket_assistant.send(ping_request)
-            self._last_ws_message_sent_timestamp = time.time()
+            # Apply rate limiting to ping requests
+            async with self._api_factory.throttler.execute_task(limit_id=CONSTANTS.WS_REQUEST_LIMIT_ID):
+                ping_request = WSJSONRequest(payload={"op": "ping"})
+                await websocket_assistant.send(ping_request)
+                self._last_ws_message_sent_timestamp = time.time()
         except Exception:
             self.logger().error("Error sending ping message", exc_info=True)
 
     async def listen_for_user_stream(self, output: asyncio.Queue):
         """
-        Connects to the user WebSocket stream and puts the messages in the output queue
+        Connects to the user WebSocket stream and puts the messages in the output queue.
+
+        Note: Bitget WebSocket connections are forcibly disconnected every 24 hours.
+        This method includes automatic reconnection logic to handle this requirement.
         """
         ws = None
         while True:

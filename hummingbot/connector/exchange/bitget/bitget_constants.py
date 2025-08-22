@@ -1,3 +1,4 @@
+from tkinter import ON
 from hummingbot.core.api_throttler.data_types import LinkedLimitWeightPair, RateLimit
 from hummingbot.core.data_type.in_flight_order import OrderState
 
@@ -33,7 +34,6 @@ WSS_PRIVATE_URL = {
 # Request timeout and interval settings
 REQUEST_TIMEOUT = 10.0
 WS_HEARTBEAT_TIME_INTERVAL = 30.0
-WS_MAX_CONNECTIONS = 100
 
 # Bitget product type
 INST_TYPE = "SPOT"
@@ -50,14 +50,13 @@ WS_DEPTH_DIFF_CHANNEL_NAME = "books"
 WS_ORDERS_CHANNEL_NAME = "orders"
 WS_ACCOUNT_CHANNEL_NAME = "account"
 
-# Public API endpoints - Bitget v2.1
+# Public API endpoints
 SYMBOL_INFO_PATH_URL = "/api/v2/spot/public/symbols"
 TICKER_INFO_PATH_URL = "/api/v2/spot/market/tickers"
 ORDER_BOOK_PATH_URL = "/api/v2/spot/market/orderbook"
 SERVER_TIME_PATH_URL = "/api/v2/public/time"
-RECENT_TRADES_PATH_URL = "/api/v2/spot/market/fills"
 
-# Private API endpoints - Bitget v2.1
+# Private API endpoints
 ACCOUNT_ASSETS_PATH_URL = "/api/v2/spot/account/assets"
 ORDER_INFO_PATH_URL = "/api/v2/spot/trade/orderInfo"
 ORDER_HISTORY_PATH_URL = "/api/v2/spot/trade/history-orders"
@@ -70,7 +69,7 @@ CANCEL_ORDER_PATH_URL = "/api/v2/spot/trade/cancel-order"
 ORDER_TYPE_LIMIT = "limit"
 ORDER_TYPE_MARKET = "market"
 
-# Order States - Bitget v2.1 status mapping (based on official API documentation)
+# Order States
 ORDER_STATE = {
     "live": OrderState.OPEN,
     "partially_filled": OrderState.PARTIALLY_FILLED,
@@ -81,102 +80,107 @@ ORDER_STATE = {
 # API Response codes - Most important response codes
 RET_CODE_OK = "00000"
 
-### TODO: Need to revize from this point onwards because we need to understand how to setup the limits. Do they need to be grouped and linked? What about maximum connections? etc.
-### Websocket endpoints need to be added here as well most probably
+# Rate limiting constants - Based on official Bitget WebSocket documentation
+# Official Connection Limits:
+# - 300 connection requests/IP/5min AND Max 100 connections/IP (taking the more restrictive limit)
+WS_CONNECTION_LIMIT_ID = "WSConnection"
+WS_CONNECTION_LIMIT = 100
 
-# Rate limiting defaults
-# Helps
-RATE_LIMIT_GET_REQUEST = "GET_REQUEST"
-RATE_LIMIT_POST_REQUEST = "POST_REQUEST"
-RATE_LIMIT_WS_REQUEST = "WS_REQUEST"
+# Official Message Limits:
+# - Up to 10 messages per second (includes ping and JSON messages)
+WS_REQUEST_LIMIT_ID = "WSRequest"
+WS_REQUEST_LIMIT = 10
 
+# Global REST API Rate Limit
+# - 6000 requests per minute globally across all REST endpoints
+ALL_ENDPOINTS_LIMIT_ID = "ALL_ENDPOINTS_LIMIT"
+ALL_ENDPOINTS_LIMIT = 6000
+
+# Utility constants
 ONE_SECOND = 1
 ONE_MINUTE = 60
+FIVE_MINUTES = 5 * ONE_MINUTE
 
-# Generic rate limits (to be updated with actual Bitget limits)
-MAX_REQUEST_LIMIT_DEFAULT = 600  # placeholder - needs verification
-
-# Define rate limits based on Bitget API documentation
-# Note: These are estimated values and should be verified against official documentation
+# Define rate limits based on official Bitget API documentation
 RATE_LIMITS = [
-    # Public API endpoints
+    # Global rate limit for all REST API endpoints
+    RateLimit(
+        limit_id=ALL_ENDPOINTS_LIMIT_ID,
+        limit=ALL_ENDPOINTS_LIMIT,
+        time_interval=ONE_MINUTE
+    ),
+
+    # WebSocket connection and request limits
+    RateLimit(WS_CONNECTION_LIMIT_ID, limit=WS_CONNECTION_LIMIT, time_interval=FIVE_MINUTES),
+    RateLimit(WS_REQUEST_LIMIT_ID, limit=WS_REQUEST_LIMIT, time_interval=ONE_SECOND),
+
+    # Public API endpoints - all linked to global limit
     RateLimit(
         limit_id=SYMBOL_INFO_PATH_URL,
         limit=20,
         time_interval=ONE_SECOND,
+        linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]
     ),
     RateLimit(
         limit_id=TICKER_INFO_PATH_URL,
         limit=20,
         time_interval=ONE_SECOND,
+        linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]
     ),
     RateLimit(
         limit_id=ORDER_BOOK_PATH_URL,
         limit=20,
         time_interval=ONE_SECOND,
+        linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]
     ),
     RateLimit(
         limit_id=SERVER_TIME_PATH_URL,
         limit=20,
         time_interval=ONE_SECOND,
-    ),
-    RateLimit(
-        limit_id=RECENT_TRADES_PATH_URL,
-        limit=20,
-        time_interval=ONE_SECOND,
+        linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]
     ),
 
-    # Private API endpoints
+    # Private API endpoints - all linked to global limit
     RateLimit(
         limit_id=ACCOUNT_ASSETS_PATH_URL,
-        limit=20,
+        limit=10,
         time_interval=ONE_SECOND,
-    ),
-    RateLimit(
-        limit_id=PLACE_ORDER_PATH_URL,
-        limit=100,
-        time_interval=ONE_SECOND,
-    ),
-    RateLimit(
-        limit_id=CANCEL_ORDER_PATH_URL,
-        limit=100,
-        time_interval=ONE_SECOND,
+        linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]
     ),
     RateLimit(
         limit_id=ORDER_INFO_PATH_URL,
         limit=20,
         time_interval=ONE_SECOND,
-    ),
-    RateLimit(
-        limit_id=UNFILLED_ORDERS_PATH_URL,
-        limit=20,
-        time_interval=ONE_SECOND,
+        linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]
     ),
     RateLimit(
         limit_id=ORDER_HISTORY_PATH_URL,
         limit=20,
         time_interval=ONE_SECOND,
+        linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]
     ),
     RateLimit(
         limit_id=FILLS_HISTORY_PATH_URL,
+        limit=10,
+        time_interval=ONE_SECOND,
+        linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]
+    ),
+    RateLimit(
+        limit_id=UNFILLED_ORDERS_PATH_URL,
         limit=20,
         time_interval=ONE_SECOND,
-    ),
-
-    # Generic rate limits
-    RateLimit(
-        limit_id=RATE_LIMIT_GET_REQUEST,
-        limit=600,
-        time_interval=ONE_MINUTE,
+        linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]
     ),
     RateLimit(
-        limit_id=RATE_LIMIT_POST_REQUEST,
-        limit=600,
-        time_interval=ONE_MINUTE,
-    ),
-    RateLimit(
-        limit_id=RATE_LIMIT_WS_REQUEST,
-        limit=5,
+        limit_id=PLACE_ORDER_PATH_URL,
+        limit=10,
         time_interval=ONE_SECOND,
+        linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]
+    ),
+    RateLimit(
+        limit_id=CANCEL_ORDER_PATH_URL,
+        limit=10,
+        time_interval=ONE_SECOND,
+        linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]
     ),
 ]
