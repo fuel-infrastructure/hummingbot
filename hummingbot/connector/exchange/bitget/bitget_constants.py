@@ -10,6 +10,8 @@ HBOT_ORDER_ID_PREFIX = "BITGET-"
 MAX_ORDER_ID_LEN = 32
 HBOT_BROKER_ID = "Hummingbot"
 
+# Bitget specific constants
+
 SIDE_BUY = "buy"
 SIDE_SELL = "sell"
 
@@ -17,6 +19,8 @@ TIME_IN_FORCE_GTC = "gtc"
 TIME_IN_FORCE_IOC = "ioc"
 TIME_IN_FORCE_FOK = "fok"
 TIME_IN_FORCE_PO = "post_only"
+
+PAIR_ACTIVE_STR = "online"
 
 # Base URLs - Bitget v2.1 API
 REST_URLS = {
