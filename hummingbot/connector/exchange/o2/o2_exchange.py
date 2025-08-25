@@ -742,7 +742,8 @@ class O2Exchange(ExchangePyBase):
             try:
                 # Get order details from O2 API
                 market_id = await self.exchange_market_id_associated_to_pair(trading_pair=order.trading_pair)
-                self.logger().debug(f"Fetching order details for order {order.client_order_id} (Exchange ID: {order.exchange_order_id})")
+                self.logger().info(f"Fetching order details for order {order.client_order_id} (Exchange ID: {order.exchange_order_id})")
+                self.logger().info(f"Fetching order details for order {market_id})")
                 order_response = await self._api_get(
                     path_url=CONSTANTS.ORDER_PATH_URL,  # "/order"
                     params={
