@@ -335,7 +335,7 @@ class HedgeStrategy(StrategyPyBase):
         Check if hedge interval has passed and process hedge if so
         :param timestamp: clock timestamp
         """
-        self.logger().info("HEDGEEEE :: TICK")
+        # self.logger().info("HEDGEEEE :: TICK")
         if timestamp - self._last_timestamp < self._hedge_interval:
             return
         self.logger().info("HEDGEEEE :: RUNNING")
