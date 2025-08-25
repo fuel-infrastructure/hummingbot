@@ -1109,7 +1109,7 @@ class O2Exchange(ExchangePyBase):
             action = event_message.get("action", "")
 
             # Log all user stream events for debugging
-            self.logger().info(f"O2 user stream event - channel: {channel}, action: {action}")
+            # self.logger().info(f"O2 user stream event - channel: {channel}, action: {action}")
 
             if channel == "orders" and action == "subscribe_orders":
                 # Process order updates

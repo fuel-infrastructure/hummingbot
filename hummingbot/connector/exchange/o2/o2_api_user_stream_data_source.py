@@ -106,17 +106,17 @@ class O2APIUserStreamDataSource(UserStreamTrackerDataSource):
             action = event_message.get("action", "")
 
             if action == "subscribe_orders":
-                self.logger().info(f"Received O2 WebSocket order update: {len(event_message.get('orders', []))} orders")
+                # self.logger().info(f"Received O2 WebSocket order update: {len(event_message.get('orders', []))} orders")
                 event_message["channel"] = "orders"
                 queue.put_nowait(event_message)
 
             elif action == "subscribe_trades":
-                self.logger().info(f"Received O2 WebSocket trade update")
+                # self.logger().info(f"Received O2 WebSocket trade update")
                 event_message["channel"] = "trades"
                 queue.put_nowait(event_message)
 
             elif action == "subscribe_balances":
-                self.logger().info(f"Received O2 WebSocket balance update")
+                # self.logger().info(f"Received O2 WebSocket balance update")
                 event_message["channel"] = "balances"
                 queue.put_nowait(event_message)
 
