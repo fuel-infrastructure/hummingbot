@@ -19,7 +19,7 @@ REST_URLS = {
     "local": "http://localhost:3001",
 }
 
-ORDER_REST_URL = "http://host.docker.internal:4567"
+ORDER_REST_URL = "http://localhost:4567"
 
 WSS_URLS = {
     "testnet": "wss://api.testnet.o2.app/ws",
