@@ -111,7 +111,6 @@ class O2APIUserStreamDataSource(UserStreamTrackerDataSource):
                 queue.put_nowait(event_message)
 
             elif action == "subscribe_trades":
-                self.logger().info(f"Received O2 WebSocket trade update")
                 event_message["channel"] = "trades"
                 queue.put_nowait(event_message)
 
