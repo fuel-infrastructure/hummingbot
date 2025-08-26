@@ -74,13 +74,13 @@ class HedgeStrategy(StrategyPyBase):
         super().__init__()
         self._hedge_market_pairs = hedge_market_pairs
         self._market_pairs = market_pairs
-        self._hedge_ratio = config_map["hedge_ratio"]
-        self._leverage = config_map["hedge_leverage"]
-        self._position_mode = PositionMode.ONEWAY if config_map["hedge_position_mode"] == "ONEWAY" else PositionMode.HEDGE
-        self._slippage = config_map["slippage"]
-        self._min_trade_size = config_map["min_trade_size"]
-        self._hedge_interval = config_map["hedge_interval"]
-        self._value_mode = config_map["value_mode"]
+        self._hedge_ratio = config_map.hedge_ratio
+        self._leverage = config_map.hedge_leverage
+        self._position_mode = PositionMode.ONEWAY if config_map.hedge_position_mode == "ONEWAY" else PositionMode.HEDGE
+        self._slippage = config_map.slippage
+        self._min_trade_size = config_map.min_trade_size
+        self._hedge_interval = config_map.hedge_interval
+        self._value_mode = config_map.value_mode
         self._offsets = offsets
         self._status_report_interval = status_report_interval
         self._all_markets = self._hedge_market_pairs + self._market_pairs
@@ -90,7 +90,7 @@ class HedgeStrategy(StrategyPyBase):
         self._status_messages = []
         self._last_report_timestamp = {}
         self._enable_auto_set_position_mode = enable_auto_set_position_mode
-        if config_map["value_mode"]:
+        if config_map.value_mode:
             self.hedge = self.hedge_by_value
             self._hedge_market_pair = hedge_market_pairs[0]
             self.logger().info(f"Hedge market pair: {self._hedge_market_pair}")
