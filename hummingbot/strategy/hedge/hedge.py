@@ -54,7 +54,7 @@ class HedgeStrategy(StrategyPyBase):
         market_pairs: List[MarketTradingPairTuple],
         offsets: Dict[MarketTradingPairTuple, Decimal],
         status_report_interval: float = 900,
-        max_order_age: float = 5,
+        max_order_age: float = 10,
         enable_auto_set_position_mode: bool = True,
     ):
         """
@@ -336,12 +336,12 @@ class HedgeStrategy(StrategyPyBase):
         :param timestamp: clock timestamp
         """
         # self.logger().info("HEDGEEEE :: TICK")
-        if timestamp - self._last_timestamp < self._hedge_interval:
-            return
-        self.logger().info("HEDGEEEE :: RUNNING")
         if self.check_and_cancel_active_orders():
             self.interval_log("hedge", "Active orders present. Skipping hedge check until active orders expires.")
             return
+        if timestamp - self._last_timestamp < self._hedge_interval:
+            return
+        self.logger().info("HEDGEEEE :: RUNNING")
         self._all_markets_ready = all([market.ready for market in self.active_markets])
         if not self._all_markets_ready:
             # Markets not ready yet. Don't do anything.
