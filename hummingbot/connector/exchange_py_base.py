@@ -181,6 +181,7 @@ class ExchangePyBase(ExchangeBase, ABC):
         Returns True if the connector is ready to operate (all connections established with the exchange). If it is
         not ready it returns False.
         """
+        self.logger().warning(f"Status dict ({self.display_name}): {self.status_dict}")
         return all(self.status_dict.values())
 
     @property
