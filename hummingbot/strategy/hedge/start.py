@@ -1,7 +1,6 @@
 from decimal import Decimal
 
 from hummingbot.strategy.hedge.hedge import HedgeStrategy
-from hummingbot.strategy.hedge.hedge_config_map import hedge_config_map as c_map
 from hummingbot.strategy.hedge.hedge_config_map_pydantic import MAX_CONNECTOR, HedgeConfigMap
 from hummingbot.strategy.market_trading_pair_tuple import MarketTradingPairTuple
 
