@@ -54,7 +54,7 @@ class HedgeStrategy(StrategyPyBase):
         market_pairs: List[MarketTradingPairTuple],
         offsets: Dict[MarketTradingPairTuple, Decimal],
         status_report_interval: float = 900,
-        max_order_age: float = 10,
+        max_order_age: float = 5,
         enable_auto_set_position_mode: bool = True,
     ):
         """
@@ -111,10 +111,6 @@ class HedgeStrategy(StrategyPyBase):
 
         all_markets = list(set([market_pair.market for market_pair in self._all_markets]))
         self.add_markets(all_markets)
-
-        self.logger().info("OFFSETS:")
-        for market_pair, offset in self._offsets.items():
-            self.logger().info(f" - {market_pair}: {offset}")
 
     def get_market_pair_by_asset(self) -> Dict[MarketTradingPairTuple, List[MarketTradingPairTuple]]:
         """
@@ -335,13 +331,12 @@ class HedgeStrategy(StrategyPyBase):
         Check if hedge interval has passed and process hedge if so
         :param timestamp: clock timestamp
         """
-        # self.logger().info("HEDGEEEE :: TICK")
         if self.check_and_cancel_active_orders():
             self.interval_log("hedge", "Active orders present. Skipping hedge check until active orders expires.")
             return
         if timestamp - self._last_timestamp < self._hedge_interval:
             return
-        self.logger().info("HEDGEEEE :: RUNNING")
+        self.logger().info("Running hedge operations")
         self._all_markets_ready = all([market.ready for market in self.active_markets])
         if not self._all_markets_ready:
             # Markets not ready yet. Don't do anything.
@@ -458,7 +453,7 @@ class HedgeStrategy(StrategyPyBase):
         """
         The main process of the strategy for value mode = True.
         """
-        self.logger().info("HEDGEEEE :: HEDGING BY VALUE")
+        self.logger().info("Hedging by value...")
         is_buy, value_to_hedge = self.get_hedge_direction_and_value()
         price, amount = self.calculate_hedge_price_and_amount(is_buy, value_to_hedge)
         if amount == Decimal("0"):
@@ -502,7 +497,7 @@ class HedgeStrategy(StrategyPyBase):
         """
         The main process of the strategy for value mode = False.
         """
-        self.logger().info("HEDGEEEE :: HEDGING BY AMOUNT")
+        self.logger().info("Hedging by amount...")
         for hedge_market, market_list in self._market_pair_by_asset.items():
             is_buy, amount_to_hedge = self.get_hedge_direction_and_amount_by_asset(hedge_market, market_list)
             asset = hedge_market.trading_pair.split("-")[0]
@@ -637,7 +632,9 @@ class HedgeStrategy(StrategyPyBase):
         if not self.active_orders:
             return False
         for market_pair, order in self.active_orders:
-            self.logger().info(f"Found order {order.client_order_id} with {order.quantity} {order.trading_pair} at {order.price}")
+            self.logger().info(
+                f"Might cancel {'buy' if order.is_buy else 'sell'} {order.quantity} {order.trading_pair} at {order.price}"
+            )
             if order_age(order, self.current_timestamp) < self._max_order_age:
                 continue
             self.logger().info(
