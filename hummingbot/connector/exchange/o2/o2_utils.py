@@ -4,11 +4,7 @@ from typing import Any, Dict
 from pydantic import ConfigDict, Field, field_validator
 
 from hummingbot.client.config.config_data_types import BaseConnectorConfigMap
-from hummingbot.connector.exchange.o2.o2_constants import DEFAULT_DOMAIN
 from hummingbot.core.data_type.trade_fee import TradeFeeSchema
-
-CENTRALIZED = True
-EXAMPLE_PAIR = "FUEL-USDC"
 
 # O2 doesn't have fees yet since it's in development
 DEFAULT_FEES = TradeFeeSchema(
