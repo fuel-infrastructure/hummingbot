@@ -39,7 +39,6 @@ ACCOUNTS_PATH_URL = "/accounts"
 
 # Websocket Endpoints
 WS_SUBSCRIBE_DEPTH = "subscribe_depth"
-WS_SUBSCRIBE_DEPTH_UPDATE = "subscribe_depth_update"
 WS_SUBSCRIBE_TRADES = "subscribe_trades"
 WS_SUBSCRIBE_ORDERS = "subscribe_orders"
 WS_SUBSCRIBE_BALANCES = "subscribe_balances"
