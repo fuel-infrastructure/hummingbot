@@ -64,6 +64,7 @@ ALL_ENDPOINTS_LIMIT_ID = "ALL_ENDPOINTS_LIMIT"
 ALL_ENDPOINTS_LIMIT = 6000
 
 NO_LIMIT = sys.maxsize
+MAX_REQUEST = 100
 
 RATE_LIMITS = [
 
@@ -74,14 +75,14 @@ RATE_LIMITS = [
         time_interval=ONE_MINUTE
     ),
 
-    RateLimit(limit_id=MARKETS_PATH_URL, limit=100, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
-    RateLimit(limit_id=TICKER_PATH_URL, limit=100, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
-    RateLimit(limit_id=SUMMARY_PATH_URL, limit=100, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
-    RateLimit(limit_id=DEPTH_PATH_URL, limit=100, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
-    RateLimit(limit_id=TRADES_PATH_URL, limit=100, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
-    RateLimit(limit_id=BALANCE_PATH_URL, limit=100, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
-    RateLimit(limit_id=ORDERS_PATH_URL, limit=100, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
-    RateLimit(limit_id=ORDER_PATH_URL, limit=100, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
-    RateLimit(limit_id=HEALTH_PATH_URL, limit=100, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
-    RateLimit(limit_id=ACCOUNTS_PATH_URL, limit=100, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
+    RateLimit(limit_id=MARKETS_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
+    RateLimit(limit_id=TICKER_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
+    RateLimit(limit_id=SUMMARY_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
+    RateLimit(limit_id=DEPTH_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
+    RateLimit(limit_id=TRADES_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
+    RateLimit(limit_id=BALANCE_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
+    RateLimit(limit_id=ORDERS_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
+    RateLimit(limit_id=ORDER_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
+    RateLimit(limit_id=HEALTH_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
+    RateLimit(limit_id=ACCOUNTS_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_SECOND, linked_limits=[LinkedLimitWeightPair(ALL_ENDPOINTS_LIMIT_ID)]),
 ]
