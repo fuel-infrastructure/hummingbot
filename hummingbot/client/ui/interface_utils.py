@@ -74,6 +74,7 @@ async def start_trade_monitor(trade_monitor):
                             pnls = []
                             market_info: Set[Tuple[str, str]] = set((t.market, t.symbol) for t in trades)
                             for market, symbol in market_info:
+                                print(market)
                                 cur_trades = [t for t in trades if t.market == market and t.symbol == symbol]
                                 cur_balances = await hb.trading_core.get_current_balances(market)
                                 perf = await PerformanceMetrics.create(symbol, cur_trades, cur_balances)
