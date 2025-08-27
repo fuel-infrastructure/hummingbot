@@ -2,6 +2,7 @@ from decimal import Decimal
 from typing import Any, Dict
 
 from pydantic import ConfigDict, Field, field_validator
+import hummingbot.connector.exchange.o2.o2_constants as CONSTANTS
 
 from hummingbot.client.config.config_data_types import BaseConnectorConfigMap
 from hummingbot.core.data_type.trade_fee import TradeFeeSchema
@@ -18,14 +19,14 @@ def normalize_market_id(market_id: str) -> str:
     if not market_id:
         return market_id
 
-    # Handle case-insensitive check for '0x' or '0X' prefix
-    if market_id.lower().startswith("0x"):
-        # If it has a prefix, ensure it's lowercase '0x'
-        return "0x" + market_id[2:]
+    # Handle case-insensitive check for prefix
+    lower_cased_prefix = CONSTANTS.MARKET_ID_PREFIX.lower()
+    if market_id.lower().startswith(lower_cased_prefix):
+        # If it has a prefix, ensure it's lowercase
+        return lower_cased_prefix + market_id[2:]
     else:
         # If no prefix, add it
-        return f"0x{market_id}"
-
+        return f"{lower_cased_prefix}{market_id}"
 
 def is_exchange_information_valid(exchange_info: Dict[str, Any]) -> bool:
     # Basic validation - ensure we have required fields for new format
