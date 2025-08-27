@@ -47,7 +47,6 @@ WS_PING_REQUEST = "ping"
 WS_PONG_RESPONSE = "pong"
 
 # Public WebSocket channels
-WS_DEPTH15_CHANNEL_NAME = "books15"
 WS_DEPTH_DIFF_CHANNEL_NAME = "books"
 
 # Private WebSocket channels
