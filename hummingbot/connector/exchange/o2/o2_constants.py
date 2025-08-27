@@ -63,8 +63,10 @@ DEFAULT_ASSET_DECIMALS = 9
 ALL_ENDPOINTS_LIMIT_ID = "ALL_ENDPOINTS_LIMIT"
 ALL_ENDPOINTS_LIMIT = 6000
 
-NO_LIMIT = sys.maxsize
+# Per-endpoint max request limits
 MAX_REQUEST = 100
+
+NO_LIMIT = sys.maxsize
 
 RATE_LIMITS = [
 
