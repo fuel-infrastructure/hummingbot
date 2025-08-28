@@ -2,8 +2,8 @@ from decimal import Decimal
 from typing import Any, Dict
 
 from pydantic import ConfigDict, Field, field_validator
-import hummingbot.connector.exchange.o2.o2_constants as CONSTANTS
 
+import hummingbot.connector.exchange.o2.o2_constants as CONSTANTS
 from hummingbot.client.config.config_data_types import BaseConnectorConfigMap
 from hummingbot.core.data_type.trade_fee import TradeFeeSchema
 
@@ -13,7 +13,7 @@ EXAMPLE_PAIR = "FUEL-USDC"
 # O2 doesn't have fees yet since it's in development
 DEFAULT_FEES = TradeFeeSchema(
     maker_percent_fee_decimal=Decimal("0.0"),
-    taker_percent_fee_decimal=Decimal("0.0"),
+    taker_percent_fee_decimal=Decimal("0.00062"),
     buy_percent_fee_deducted_from_returns=True,
 )
 
@@ -30,6 +30,7 @@ def normalize_market_id(market_id: str) -> str:
     else:
         # If no prefix, add it
         return f"{lower_cased_prefix}{market_id}"
+
 
 def is_exchange_information_valid(exchange_info: Dict[str, Any]) -> bool:
     # Basic validation - ensure we have required fields
@@ -73,7 +74,7 @@ class O2ConfigMap(BaseConnectorConfigMap):
     def validate_trading_account(cls, v: str):
         if not v:
             raise ValueError("Trading account is required")
-        
+
         # Add trading account prefix if not present
         if not v.startswith(CONSTANTS.TRADING_ACCOUNT_PREFIX):
             v = CONSTANTS.TRADING_ACCOUNT_PREFIX + v
@@ -81,7 +82,7 @@ class O2ConfigMap(BaseConnectorConfigMap):
         # Check length after potentially adding prefix
         if len(v) != 66:  # 0x + 64 hex characters
             raise ValueError(f"Invalid trading account length (expected 66 characters including 0x, got {len(v)})")
-        
+
         return v
 
 
@@ -105,7 +106,7 @@ class O2LocalConfigMap(BaseConnectorConfigMap):
     def validate_trading_account(cls, v: str):
         if not v:
             raise ValueError("Trading account is required")
-        
+
         # Add trading account prefix if not present
         if not v.startswith(CONSTANTS.TRADING_ACCOUNT_PREFIX):
             v = CONSTANTS.TRADING_ACCOUNT_PREFIX + v
@@ -113,7 +114,39 @@ class O2LocalConfigMap(BaseConnectorConfigMap):
         # Check length after potentially adding prefix
         if len(v) != 66:  # Expected 0x + 64 hex characters
             raise ValueError(f"Invalid trading account length (expected 66 characters including 0x, got {len(v)})")
-        
+
+        return v
+
+
+class O2DevnetConfigMap(BaseConnectorConfigMap):
+    """Configuration for O2 Devnet connector"""
+    connector: str = "o2_devnet"
+
+    trading_account: str = Field(
+        json_schema_extra={
+            "prompt": "Enter your Fuel trading account address (devnet)",
+            "is_secure": False,
+            "is_connect_key": True,
+            "prompt_on_new": True,
+        },
+    )
+
+    model_config = ConfigDict(title="o2_devnet")
+
+    @field_validator("trading_account", mode="before")
+    @classmethod
+    def validate_trading_account(cls, v: str):
+        if not v:
+            raise ValueError("Trading account is required")
+
+        # Add trading account prefix if not present
+        if not v.startswith(CONSTANTS.TRADING_ACCOUNT_PREFIX):
+            v = CONSTANTS.TRADING_ACCOUNT_PREFIX + v
+
+        # Check length after potentially adding prefix
+        if len(v) != 66:  # Expected 0x + 64 hex characters
+            raise ValueError(f"Invalid trading account length (expected 66 characters including 0x, got {len(v)})")
+
         return v
 
 
@@ -121,8 +154,8 @@ class O2LocalConfigMap(BaseConnectorConfigMap):
 KEYS = O2ConfigMap.model_construct()
 
 # Configuration for additional domains
-OTHER_DOMAINS = ["o2_local"]
-OTHER_DOMAINS_PARAMETER = {"o2_local": "local"}
-OTHER_DOMAINS_EXAMPLE_PAIR = {"o2_local": "FUEL-USDC"}
-OTHER_DOMAINS_DEFAULT_FEES = {"o2_local": DEFAULT_FEES}
-OTHER_DOMAINS_KEYS = {"o2_local": O2LocalConfigMap.model_construct()}
+OTHER_DOMAINS = ["o2_local", "o2_devnet"]
+OTHER_DOMAINS_PARAMETER = {"o2_local": "local", "o2_devnet": "devnet"}
+OTHER_DOMAINS_EXAMPLE_PAIR = {"o2_local": "FUEL-USDC", "o2_devnet": "FUEL-USDC"}
+OTHER_DOMAINS_DEFAULT_FEES = {"o2_local": DEFAULT_FEES, "o2_devnet": DEFAULT_FEES}
+OTHER_DOMAINS_KEYS = {"o2_local": O2LocalConfigMap.model_construct(), "o2_devnet": O2DevnetConfigMap.model_construct()}

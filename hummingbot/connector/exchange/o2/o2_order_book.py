@@ -16,10 +16,10 @@ class O2OrderBook(OrderBook):
     """
 
     @classmethod
-    def snapshot_message_from_exchange(cls,
-                                       msg: Dict[str, Any],
-                                       timestamp: float,
-                                       metadata: Optional[Dict] = None) -> OrderBookMessage:
+    def snapshot_rest_message_from_exchange(cls,
+                                            msg: Dict[str, Any],
+                                            timestamp: float,
+                                            metadata: Optional[Dict] = None) -> OrderBookMessage:
         if metadata:
             msg.update(metadata)
 
@@ -72,6 +72,62 @@ class O2OrderBook(OrderBook):
         return OrderBookMessage(OrderBookMessageType.SNAPSHOT, content, timestamp=timestamp)
 
     @classmethod
+    def snapshot_ws_message_from_exchange(cls,
+                                          msg: Dict[str, Any],
+                                          timestamp: float,
+                                          metadata: Optional[Dict] = None) -> OrderBookMessage:
+        if metadata:
+            msg.update(metadata)
+
+        view = msg.get("view", {})
+        update_id = msg.get("timestamp", int(timestamp * 1000))
+
+        trading_pair = msg.get("trading_pair", "")
+        connector = msg.get("connector")
+
+        if not trading_pair:
+            raise ValueError(f"Missing trading_pair in order book snapshot message: {msg}")
+
+        if trading_pair and connector:
+            base_asset, quote_asset = trading_pair.split("-")
+            amount_decimals = connector.get_asset_decimals(base_asset)
+            price_decimals = connector.get_asset_decimals(quote_asset)
+        elif trading_pair:
+            base_asset, quote_asset = trading_pair.split("-")
+            amount_decimals = CONSTANTS.ASSETS_DECIMALS_MAP.get(base_asset, CONSTANTS.DEFAULT_ASSET_DECIMALS)
+            price_decimals = CONSTANTS.ASSETS_DECIMALS_MAP.get(quote_asset, CONSTANTS.DEFAULT_ASSET_DECIMALS)
+        else:
+            amount_decimals = CONSTANTS.DEFAULT_ASSET_DECIMALS
+            price_decimals = CONSTANTS.DEFAULT_ASSET_DECIMALS
+
+        bids = []
+        for order in view.get("buys", []):
+            try:
+                price = float(order["price"]) / (10 ** price_decimals)
+                quantity = float(order["quantity"]) / (10 ** amount_decimals)
+                bids.append(OrderBookRow(price, quantity, update_id))
+            except (KeyError, ValueError, TypeError):
+                continue
+        asks = []
+        for order in view.get("sells", []):
+            try:
+                # Convert from scaled integers using asset-specific decimals
+                price = float(order["price"]) / (10 ** price_decimals)
+                quantity = float(order["quantity"]) / (10 ** amount_decimals)
+                asks.append(OrderBookRow(price, quantity, update_id))
+            except (KeyError, ValueError, TypeError):
+                continue
+
+        content = {
+            "trading_pair": trading_pair,
+            "update_id": update_id,
+            "bids": bids,
+            "asks": asks
+        }
+
+        return OrderBookMessage(OrderBookMessageType.SNAPSHOT, content, timestamp=timestamp)
+
+    @classmethod
     def diff_message_from_exchange(cls,
                                    msg: Dict[str, Any],
                                    timestamp: Optional[float] = None,
@@ -80,7 +136,7 @@ class O2OrderBook(OrderBook):
             msg.update(metadata)
 
         # Extract order changes from O2 WebSocket message
-        orders = msg.get("orders", {})
+        changes = msg.get("changes", {})
         update_id = int((timestamp or 0) * 1000)
 
         # Get trading pair to determine decimals
@@ -104,7 +160,7 @@ class O2OrderBook(OrderBook):
 
         # Process bid changes (O2 uses signed quantities)
         bids = []
-        for order in orders.get("buys", []):
+        for order in changes.get("buys", []):
             try:
                 # Convert from scaled integers using asset-specific decimals
                 price = float(order["price"]) / (10 ** price_decimals)
@@ -117,7 +173,7 @@ class O2OrderBook(OrderBook):
 
         # Process ask changes (O2 uses signed quantities)
         asks = []
-        for order in orders.get("sells", []):
+        for order in changes.get("sells", []):
             try:
                 # Convert from scaled integers using asset-specific decimals
                 price = float(order["price"]) / (10 ** price_decimals)

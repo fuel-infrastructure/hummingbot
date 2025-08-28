@@ -6,9 +6,6 @@ EXCHANGE_NAME = "o2"
 
 DEFAULT_DOMAIN = "testnet"
 
-# O2 uses integer prices scaled by 10^6
-O2_PRICE_SCALE_FACTOR = 6
-
 HBOT_ORDER_ID_PREFIX = "O2HB"
 HBOT_BROKER_ID = "HBOT"
 MAX_ORDER_ID_LEN = 32
@@ -18,6 +15,7 @@ TRADING_ACCOUNT_PREFIX = "0x"
 REST_URLS = {
     "testnet": "https://api.testnet.o2.app",
     "local": "http://localhost:3001",
+    "devnet": "https://api.devnet.o2.app"
 }
 
 ORDER_REST_URL = "http://localhost:4567"
@@ -25,6 +23,7 @@ ORDER_REST_URL = "http://localhost:4567"
 WSS_URLS = {
     "testnet": "wss://api.testnet.o2.app/ws",
     "local": "ws://localhost:3001/ws",
+    "devnet": "wss://api.devnet.o2.app/ws"
 }
 
 # Rest Endpoints
