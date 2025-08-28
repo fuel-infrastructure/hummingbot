@@ -13,6 +13,7 @@ HBOT_ORDER_ID_PREFIX = "O2HB"
 HBOT_BROKER_ID = "HBOT"
 MAX_ORDER_ID_LEN = 32
 MARKET_ID_PREFIX = "0x"
+TRADING_ACCOUNT_PREFIX = "0x"
 
 REST_URLS = {
     "testnet": "https://api.testnet.o2.app",
