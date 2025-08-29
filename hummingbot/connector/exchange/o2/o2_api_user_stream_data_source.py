@@ -1,9 +1,8 @@
 import asyncio
-import logging
 import time
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from hummingbot.connector.exchange.o2 import o2_constants as CONSTANTS, o2_web_utils as web_utils
+from hummingbot.connector.exchange.o2 import o2_constants as CONSTANTS
 from hummingbot.connector.exchange.o2.o2_auth import O2Auth
 from hummingbot.core.data_type.user_stream_tracker_data_source import UserStreamTrackerDataSource
 from hummingbot.core.web_assistant.connections.data_types import WSJSONRequest, WSPlainTextRequest
@@ -33,20 +32,12 @@ class O2APIUserStreamDataSource(UserStreamTrackerDataSource):
         self._api_factory = api_factory
         self._domain = domain
 
-    @classmethod
-    def logger(cls) -> HummingbotLogger:
-        if cls._logger is None:
-            cls._logger = logging.getLogger(__name__)
-        return cls._logger
-
-    @property
-    def order_book_class(self):
-        from hummingbot.core.data_type.order_book import OrderBook
-        return OrderBook
-
     async def _connected_websocket_assistant(self) -> WSAssistant:
         ws: WSAssistant = await self._api_factory.get_ws_assistant()
-        ws_url = CONSTANTS.WSS_URLS.get(self._domain, CONSTANTS.WSS_URLS.get(CONSTANTS.DEFAULT_DOMAIN))
+        ws_url = CONSTANTS.WSS_URLS.get(self._domain)
+        if ws_url is None:
+            self.logger().error(f"No WebSocket URL found for domain: {self._domain}")
+            raise ValueError(f"No WebSocket URL found for domain: {self._domain}")
 
         await ws.connect(
             ws_url=ws_url,
@@ -76,7 +67,7 @@ class O2APIUserStreamDataSource(UserStreamTrackerDataSource):
             self.logger().info(f"Subscribed to order updates for account: {account_address}")
 
             for trading_pair in self._trading_pairs:
-                market_id = await self._connector.exchange_market_id_associated_to_pair(trading_pair)
+                market_id = await self._connector.exchange_market_id_associated_to_pair(trading_pair=trading_pair)
                 trades_payload = {
                     "action": CONSTANTS.WS_SUBSCRIBE_TRADES,
                     "market_id": market_id
@@ -94,7 +85,6 @@ class O2APIUserStreamDataSource(UserStreamTrackerDataSource):
             }
             await websocket_assistant.send(WSJSONRequest(payload=balances_payload))
             self.logger().info(f"Subscribed to balance updates for account: {account_address}")
-
         except asyncio.CancelledError:
             raise
         except Exception:
@@ -105,27 +95,21 @@ class O2APIUserStreamDataSource(UserStreamTrackerDataSource):
         try:
             action = event_message.get("action", "")
 
-            if action == "subscribe_orders":
+            if action == CONSTANTS.WS_SUBSCRIBE_ORDERS:
                 event_message["channel"] = "orders"
                 queue.put_nowait(event_message)
-
-            elif action == "subscribe_trades":
+            elif action == CONSTANTS.WS_SUBSCRIBE_TRADES:
                 event_message["channel"] = "trades"
                 queue.put_nowait(event_message)
-
-            elif action == "subscribe_balances":
-                self.logger().info(f"Received O2 WebSocket balance update")
+            elif action == CONSTANTS.WS_SUBSCRIBE_BALANCES:
                 event_message["channel"] = "balances"
                 queue.put_nowait(event_message)
-
             elif "error" in event_message:
                 error_msg = event_message.get("error", "Unknown error")
                 self.logger().error(f"O2 WebSocket error: {error_msg}")
                 raise IOError(f"O2 WebSocket error: {error_msg}")
-
             else:
                 self.logger().info(f"Unhandled O2 WebSocket message with action '{action}': {event_message}")
-
         except asyncio.CancelledError:
             raise
         except Exception:
@@ -170,10 +154,8 @@ class O2APIUserStreamDataSource(UserStreamTrackerDataSource):
 
                     if message is not None:
                         await self._process_event_message(message, queue)
-
                 except asyncio.TimeoutError:
                     continue
-
             except asyncio.CancelledError:
                 raise
             except Exception as e:
@@ -182,9 +164,14 @@ class O2APIUserStreamDataSource(UserStreamTrackerDataSource):
 
     async def _get_next_message(self, websocket_assistant: WSAssistant) -> Optional[Dict[str, Any]]:
         async for ws_response in websocket_assistant.iter_messages():
+            if ws_response is None:
+                continue
             data = ws_response.data
 
             if isinstance(data, str) and data == "PONG":
                 continue
-            return data
+
+            if isinstance(data, dict):
+                return data
+
         return None
