@@ -142,47 +142,15 @@ class O2Exchange(ExchangePyBase):
         # Use parent's status check
         return super().status_dict
 
-    async def _fetch_trading_account(self):
-        try:
-            self.logger().info(f"Fetching trading account for wallet address: {self._wallet_address}")
-
-            rest_assistant = await self._web_assistants_factory.get_rest_assistant()
-
-            # Use internal API /session endpoint, similar to order placement
-            payload = {
-                "wallet_address": self._wallet_address
-            }
-
-            self.logger().debug(f"Sending request to /session with payload: {payload}")
-
-            response = await rest_assistant.execute_request(
-                url=web_utils.order_rest_url(path_url="/session", domain=self._domain),
-                params=None,
-                data=payload,
-                method=RESTMethod.POST,
-                throttler_limit_id=CONSTANTS.ACCOUNTS_LM_ID,
-            )
-
-            self.logger().debug(f"Received response from /session: {response}")
-
-            if "trade_account" in response:
-                self._trade_account = response["trade_account"]
-                self.logger().info(f"Successfully fetched trade account: {self._trade_account}")
-            else:
-                raise ValueError(f"No trade_account in response: {response}")
-
-        except Exception as e:
-            self.logger().error(f"Failed to fetch trading account: {e}", exc_info=True)
-            raise
-
     async def start_network(self):
         instance_info = f"pairs={self._trading_pairs}, req={self._trading_required}"
         self.logger().info(f"=== O2Exchange start_network() called ({instance_info}) ===")
 
         try:
             if not self._trade_account:
-                self.logger().info("Trading account not found, fetching from API...")
-                await self._fetch_trading_account()
+                self.logger().error("Trading account not found.")
+                raise ValueError("Trading account not found")
+
             self.logger().info(f"Using trading account: {self._trade_account}")
 
             self.logger().info("Calling parent start_network...")
@@ -248,7 +216,6 @@ class O2Exchange(ExchangePyBase):
             self.logger().info(f"Order book ready: {self.order_book_tracker.ready if self.order_book_tracker else 'None'}")
             self.logger().info(f"Exchange ready: {self.ready}")
             self.logger().info(f"Status dict: {self.status_dict}")
-
         except Exception as e:
             self.logger().error(f"O2Exchange start_network failed: {e}", exc_info=True)
             raise
@@ -274,7 +241,7 @@ class O2Exchange(ExchangePyBase):
     def buy(self,
             trading_pair: str,
             amount: Decimal,
-            order_type=OrderType.LIMIT,
+            order_type: OrderType = OrderType.LIMIT,
             price: Decimal = s_decimal_NaN,
             **kwargs) -> str:
         self.logger().info(f"BUY order requested - Pair: {trading_pair}, Amount: {amount}, Price: {price}, Type: {order_type}")
@@ -296,7 +263,7 @@ class O2Exchange(ExchangePyBase):
     def sell(self,
              trading_pair: str,
              amount: Decimal,
-             order_type: OrderType.LIMIT,
+             order_type: OrderType = OrderType.LIMIT,
              price: Decimal = s_decimal_NaN,
              **kwargs) -> str:
         self.logger().info(f"SELL order requested - Pair: {trading_pair}, Amount: {amount}, Price: {price}, Type: {order_type}")
@@ -470,11 +437,11 @@ class O2Exchange(ExchangePyBase):
                 quote_asset_id = quote_info.get("asset")
 
                 if base_asset_id:
-                    self._asset_decimals[base_symbol] = base_info.get("decimals", 9)
+                    self._asset_decimals[base_symbol] = base_info.get("decimals", CONSTANTS.DEFAULT_ASSET_DECIMALS)
                     self._asset_id_to_symbol[base_asset_id] = base_symbol
 
                 if quote_asset_id:
-                    self._asset_decimals[quote_symbol] = quote_info.get("decimals", 6)
+                    self._asset_decimals[quote_symbol] = quote_info.get("decimals", CONSTANTS.DEFAULT_ASSET_DECIMALS)
                     self._asset_id_to_symbol[quote_asset_id] = quote_symbol
 
                 # Create Hummingbot trading pair notation
@@ -585,7 +552,7 @@ class O2Exchange(ExchangePyBase):
             self.logger().error(f"Error fetching last traded price for {trading_pair}: {e}")
             return 0.0
 
-    # Placeholder methods for order management (not implemented yet since no auth)
+    # Placeholder methods for order management
     async def _place_order(
             self,
             order_id: str,
@@ -668,7 +635,7 @@ class O2Exchange(ExchangePyBase):
                 overwrite_url=cancel_url,
                 data=cancel_data,
                 is_auth_required=True,
-                limit_id=CONSTANTS.CANCEL_ORDER_LM_ID,
+                limit_id=CONSTANTS.ORDERS_PATH_URL,
                 headers={"referer": CONSTANTS.HBOT_BROKER_ID}
             )
 
@@ -979,7 +946,7 @@ class O2Exchange(ExchangePyBase):
                         ),
                         method=RESTMethod.GET,
                         params=params,
-                        throttler_limit_id=CONSTANTS.BALANCE_LM_ID,
+                        throttler_limit_id=CONSTANTS.BALANCE_PATH_URL,
                     )
 
                     self.logger().info(f"Balance response for {asset}: {response}")
@@ -1065,8 +1032,8 @@ class O2Exchange(ExchangePyBase):
                     # Store fees from market data
                     # O2 provides fees as strings, convert to Decimal
                     self._trading_fees[trading_pair] = {
-                        "makerFeeRate": Decimal(market_info.get("maker_fee", "0")),
-                        "takerFeeRate": Decimal(market_info.get("taker_fee", "0"))
+                        "makerFeeRate": Decimal(market_info.get("maker_fee", "0")) / Decimal("100000"),
+                        "takerFeeRate": Decimal(market_info.get("taker_fee", "0")) / Decimal("100000")
                     }
 
                     self.logger().debug(f"Updated fees for {trading_pair}: "
@@ -1074,7 +1041,6 @@ class O2Exchange(ExchangePyBase):
                                         f"taker={self._trading_fees[trading_pair]['takerFeeRate']}")
 
             self.logger().info(f"Successfully updated trading fees for {len(self._trading_fees)} pairs")
-
         except Exception as e:
             self.logger().error(f"Failed to update trading fees: {e}", exc_info=True)
             # Don't raise - let the connector continue with default fees
@@ -1269,7 +1235,7 @@ class O2Exchange(ExchangePyBase):
                 trade_update = TradeUpdate(
                     trade_id=f"fallback_{trade_id}",
                     client_order_id=matching_order.client_order_id,
-                    exchange_order_id=matching_order.exchange_order_id,
+                    exchange_order_id=matching_order.exchange_order_id or "",
                     trading_pair=trading_pair,
                     fill_timestamp=timestamp,
                     fill_price=price,
@@ -1311,6 +1277,9 @@ class O2Exchange(ExchangePyBase):
 
             expected_side = "Buy" if order.trade_type.name == "BUY" else "Sell"
             if trade_side != expected_side:
+                continue
+
+            if order.price is None:
                 continue
 
             price_diff = abs(trade_price - order.price)
