@@ -38,14 +38,17 @@ ORDER_PATH_URL = "/order"
 HEALTH_PATH_URL = "/health"
 ACCOUNTS_PATH_URL = "/accounts"
 
+REST_DEFAULT_PRECISION = "10"
+
 # Websocket Endpoints
-WS_SUBSCRIBE_PERIODIC_DEPTH = "subscribe_depth_view"
+WS_SUBSCRIBE_DEPTH_VIEW = "subscribe_depth_view"
 WS_SUBSCRIBE_TRADES = "subscribe_trades"
 WS_SUBSCRIBE_ORDERS = "subscribe_orders"
 WS_SUBSCRIBE_BALANCES = "subscribe_balances"
 
 WS_DEFAULT_PRECISION = "10"
 WS_HEARTBEAT_TIME_INTERVAL = 30
+WS_PERIODIC_DATA_FREQUENCY = "100ms"
 
 ONE_MINUTE = 60
 ONE_SECOND = 1
