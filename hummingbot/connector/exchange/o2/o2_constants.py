@@ -39,8 +39,6 @@ HEALTH_PATH_URL = "/health"
 ACCOUNTS_PATH_URL = "/accounts"
 
 # Websocket Endpoints
-WS_SUBSCRIBE_DEPTH = "subscribe_depth"
-WS_SUBSCRIBE_DEPTH_UPDATE = "subscribe_depth_update"
 WS_SUBSCRIBE_PERIODIC_DEPTH = "subscribe_depth_view"
 WS_SUBSCRIBE_TRADES = "subscribe_trades"
 WS_SUBSCRIBE_ORDERS = "subscribe_orders"
@@ -56,6 +54,9 @@ ASSETS_DECIMALS_MAP = {
     "FUEL": 9,
     "USDC": 6,
     "ETH": 9,
+    "fFUEL": 9,
+    "fUSDC": 6,
+    "fETH": 9
 }
 
 DEFAULT_ASSET_DECIMALS = 9
