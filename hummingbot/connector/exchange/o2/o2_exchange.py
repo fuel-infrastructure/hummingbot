@@ -1032,8 +1032,8 @@ class O2Exchange(ExchangePyBase):
                     # Store fees from market data
                     # O2 provides fees as strings, convert to Decimal
                     self._trading_fees[trading_pair] = {
-                        "makerFeeRate": Decimal(market_info.get("maker_fee", "0")) / Decimal("100000"),
-                        "takerFeeRate": Decimal(market_info.get("taker_fee", "0")) / Decimal("100000")
+                        "makerFeeRate": Decimal(market_info.get("maker_fee", "0")) / Decimal("1000000"),
+                        "takerFeeRate": Decimal(market_info.get("taker_fee", "0")) / Decimal("1000000")
                     }
 
                     self.logger().debug(f"Updated fees for {trading_pair}: "
