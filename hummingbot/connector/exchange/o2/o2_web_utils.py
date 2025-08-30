@@ -36,3 +36,10 @@ def build_api_factory(
 
 def create_throttler() -> AsyncThrottler:
     return AsyncThrottler(CONSTANTS.RATE_LIMITS)
+
+# TODO: get server time
+async def get_current_server_time(
+    throttler: Optional[AsyncThrottler] = None,
+    domain: str = CONSTANTS.DEFAULT_DOMAIN,
+) -> int:
+    return int(time.time() * 1e3)
