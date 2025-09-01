@@ -8,6 +8,7 @@ from hummingbot.connector.constants import s_decimal_NaN
 from hummingbot.connector.exchange.o2 import o2_constants as CONSTANTS, o2_utils, o2_web_utils as web_utils
 from hummingbot.connector.exchange.o2.o2_api_order_book_data_source import O2APIOrderBookDataSource
 from hummingbot.connector.exchange.o2.o2_auth import O2Auth
+from hummingbot.connector.exchange.o2.o2_utils import DEFAULT_FEES
 from hummingbot.connector.exchange_py_base import ExchangePyBase
 from hummingbot.connector.trading_rule import TradingRule
 from hummingbot.connector.utils import combine_to_hb_trading_pair
@@ -381,9 +382,15 @@ class O2Exchange(ExchangePyBase):
             # O2 deducts fees from the received amount (like most exchanges)
             return DeductedFromReturnsTradeFee(percent=fee_percent)
         else:
-            # Fallback to zero fees if not found (O2 currently has zero fees in testnet)
-            self.logger().debug(f"No fee data for {trading_pair}, using zero fees")
-            return DeductedFromReturnsTradeFee(percent=Decimal("0"))
+            # Fallback to default fees if not found in dynamic data
+            self.logger().warning(f"No dynamic fee data for {trading_pair}, using default fees")
+
+            if is_maker:
+                fee_percent = DEFAULT_FEES.maker_percent_fee_decimal
+            else:
+                fee_percent = DEFAULT_FEES.taker_percent_fee_decimal
+
+            return DeductedFromReturnsTradeFee(percent=fee_percent)
 
     async def _make_trading_rules_request(self) -> Any:
         """
