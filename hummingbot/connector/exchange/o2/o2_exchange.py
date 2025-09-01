@@ -531,7 +531,7 @@ class O2Exchange(ExchangePyBase):
             )
 
             # O2 ticker returns an array with a single ticker object
-            if resp_json and len(resp_json) > 0:
+            if resp_json and isinstance(resp_json, list) and len(resp_json) > 0:
                 ticker_data = resp_json[0]
                 # Get the 'last' price from ticker data
                 last_price_str = ticker_data.get("last", "0")
