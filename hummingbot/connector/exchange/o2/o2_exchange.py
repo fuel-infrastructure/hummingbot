@@ -1403,7 +1403,6 @@ class O2Exchange(ExchangePyBase):
             tracked_order = self._order_tracker.fetch_tracked_order(order_id)
             if tracked_order:
                 tracked_order.update_exchange_order_id(exchange_order_id)
-
         except Exception as e:
             self.logger().error(f"Failed to create order {order_id}: {e}")
             self.stop_tracking_order(order_id)
