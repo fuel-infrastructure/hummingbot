@@ -397,7 +397,6 @@ class O2Exchange(ExchangePyBase):
         Make request to O2 markets endpoint for trading rules and pair symbols
         """
         try:
-            from hummingbot.core.web_assistant.connections.data_types import RESTMethod
             self.logger().info("Making trading rules request to O2...")
             response = await self._api_request(
                 method=RESTMethod.GET,
