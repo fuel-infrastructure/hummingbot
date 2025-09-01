@@ -617,6 +617,7 @@ class O2Exchange(ExchangePyBase):
         else:
             return web_utils.public_rest_url(path_url, domain=self.domain)
 
+    # TODO: Error handling needs to be aligned with server.
     async def _place_cancel(self, order_id: str, tracked_order: InFlightOrder) -> bool:
         try:
             # Get market ID for the trading pair
