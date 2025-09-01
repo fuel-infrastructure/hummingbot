@@ -1271,8 +1271,7 @@ class O2Exchange(ExchangePyBase):
         except Exception:
             self.logger().exception(f"Error processing O2 trade update: {event_message}")
 
-    def _find_matching_order(self, trading_pair: str, trade_side: str, trade_price: Decimal,
-                             trade_quantity: Decimal, trade_timestamp: float) -> Optional[InFlightOrder]:
+    def _find_matching_order(self, trading_pair: str, trade_side: str, trade_price: Decimal, trade_quantity: Decimal, trade_timestamp: float) -> Optional[InFlightOrder]:
         """
         Find bot order that matches this trade using heuristics
         """
