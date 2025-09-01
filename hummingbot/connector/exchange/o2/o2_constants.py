@@ -55,7 +55,7 @@ ONE_SECOND = 1
 
 ASSETS_DECIMALS_MAP = {
     "FUEL": 9,
-    "USDC": 6,
+    "USDC": 9,
     "ETH": 9,
     "fFUEL": 9,
     "fUSDC": 6,
