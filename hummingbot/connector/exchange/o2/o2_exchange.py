@@ -320,10 +320,12 @@ class O2Exchange(ExchangePyBase):
         # O2 doesn't have strict time synchronization requirements yet
         return False
 
+    # TODO: Align custom-server error handling with this function
     def _is_order_not_found_during_status_update_error(self, status_update_exception: Exception) -> bool:
         error_str = str(status_update_exception)
         return "not found" in error_str.lower() and "order" in error_str.lower()
 
+    # TODO: Align custom-server error handling with this function
     def _is_order_not_found_during_cancelation_error(self, cancelation_exception: Exception) -> bool:
         error_str = str(cancelation_exception)
         return "not found" in error_str.lower() and "order" in error_str.lower()
