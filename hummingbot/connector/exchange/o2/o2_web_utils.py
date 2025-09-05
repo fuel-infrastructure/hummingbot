@@ -37,6 +37,8 @@ def build_api_factory(
 def create_throttler() -> AsyncThrottler:
     return AsyncThrottler(CONSTANTS.RATE_LIMITS)
 
+# TODO: o2 does have server time sync so far
+
 
 async def get_current_server_time(
     throttler: Optional[AsyncThrottler] = None,
