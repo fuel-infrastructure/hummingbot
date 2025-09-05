@@ -22,7 +22,7 @@ def private_rest_url(path_url: str, domain: str = CONSTANTS.DEFAULT_DOMAIN) -> s
 
 
 def order_rest_url(path_url: str, domain: str = CONSTANTS.DEFAULT_DOMAIN) -> str:
-    return CONSTANTS.ORDER_REST_URL + path_url
+    return CONSTANTS.ORDER_REST_URL.get(domain, CONSTANTS.ORDER_REST_URL.get(CONSTANTS.DEFAULT_DOMAIN)) + path_url
 
 
 def build_api_factory(

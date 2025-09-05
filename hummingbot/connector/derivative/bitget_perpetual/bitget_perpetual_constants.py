@@ -49,7 +49,7 @@ CANCEL_ALL_ACTIVE_ORDERS_PATH_URL = "/api/mix/v1/order/cancel-batch-orders"
 QUERY_ACTIVE_ORDER_PATH_URL = "/api/mix/v1/order/detail"
 USER_TRADE_RECORDS_PATH_URL = "/api/mix/v1/order/fills"
 GET_WALLET_BALANCE_PATH_URL = "/api/mix/v1/account/accounts"
-SET_POSITION_MODE_URL = "/api/mix/v1/account/setMarginMode"
+SET_POSITION_MODE_URL = "/api/mix/v1/account/setPositionMode"
 GET_FUNDING_FEES_PATH_URL = "/api/mix/v1/account/accountBill"
 
 # Funding Settlement Time Span

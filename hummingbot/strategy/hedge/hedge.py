@@ -336,6 +336,7 @@ class HedgeStrategy(StrategyPyBase):
             return
         if timestamp - self._last_timestamp < self._hedge_interval:
             return
+        self.logger().info("Running hedge operations")
         self._all_markets_ready = all([market.ready for market in self.active_markets])
         if not self._all_markets_ready:
             # Markets not ready yet. Don't do anything.
@@ -452,6 +453,7 @@ class HedgeStrategy(StrategyPyBase):
         """
         The main process of the strategy for value mode = True.
         """
+        self.logger().info("Hedging by value...")
         is_buy, value_to_hedge = self.get_hedge_direction_and_value()
         price, amount = self.calculate_hedge_price_and_amount(is_buy, value_to_hedge)
         if amount == Decimal("0"):
@@ -482,7 +484,7 @@ class HedgeStrategy(StrategyPyBase):
         for market_pair in market_list:
             amount = self.get_base_amount(market_pair)
             total_amount += self.get_base_amount(market_pair)
-            self.logger().debug("Market pair: %s amount: %s, total_amount: %s", market_pair, amount, total_amount)
+            self.logger().info("Market pair: %s amount: %s, total_amount: %s", market_pair, amount, total_amount)
 
         hedge_amount = self.get_base_amount(hedge_pair)
         net_amount = total_amount * self._hedge_ratio + hedge_amount
@@ -495,6 +497,7 @@ class HedgeStrategy(StrategyPyBase):
         """
         The main process of the strategy for value mode = False.
         """
+        self.logger().info("Hedging by amount...")
         for hedge_market, market_list in self._market_pair_by_asset.items():
             is_buy, amount_to_hedge = self.get_hedge_direction_and_amount_by_asset(hedge_market, market_list)
             asset = hedge_market.trading_pair.split("-")[0]
@@ -504,7 +507,7 @@ class HedgeStrategy(StrategyPyBase):
                 self.logger().debug("No hedge required for %s.", asset)
                 self._status_messages.append(f"No hedge required for {asset}.")
                 continue
-            price = hedge_market.get_mid_price() * self.get_slippage_ratio(is_buy)
+            price = hedge_market.get_price(not is_buy) * self.get_slippage_ratio(is_buy)
             self.logger().info(
                 "Hedge by amount. Mid price: %s Hedge direction: %s. Hedge price: %s. Hedge amount: %s",
                 hedge_market.get_mid_price(), is_buy, price, amount_to_hedge
@@ -619,7 +622,7 @@ class HedgeStrategy(StrategyPyBase):
             if isinstance(order, PerpetualOrderCandidate) and order.position_close:
                 position_action = PositionAction.CLOSE
             trade = self.buy_with_specific_market if is_buy else self.sell_with_specific_market
-            trade(market_pair, amount, order_type=OrderType.LIMIT, price=price, position_action=position_action)
+            # trade(market_pair, amount, order_type=OrderType.LIMIT, price=price, position_action=position_action)
 
     def check_and_cancel_active_orders(self) -> bool:
         """
@@ -629,10 +632,13 @@ class HedgeStrategy(StrategyPyBase):
         if not self.active_orders:
             return False
         for market_pair, order in self.active_orders:
+            self.logger().info(
+                f"Might cancel {'buy' if order.is_buy else 'sell'} {order.quantity} {order.trading_pair} at {order.price}"
+            )
             if order_age(order, self.current_timestamp) < self._max_order_age:
                 continue
             self.logger().info(
                 f"Cancel {'buy' if order.is_buy else 'sell'} {order.quantity} {order.trading_pair} at {order.price}"
             )
-            market_pair.cancel(order.trading_pair, order.client_order_id)
+            # market_pair.cancel(order.trading_pair, order.client_order_id)
         return True

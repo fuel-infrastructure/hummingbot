@@ -18,7 +18,10 @@ REST_URLS = {
     "devnet": "https://api.devnet.o2.app"
 }
 
-ORDER_REST_URL = "http://localhost:4567"
+ORDER_REST_URL = {
+    "testnet": "http://localhost:4567",
+    "local": "http://localhost:4568"
+}
 
 WSS_URLS = {
     "testnet": "wss://api.testnet.o2.app/ws",
