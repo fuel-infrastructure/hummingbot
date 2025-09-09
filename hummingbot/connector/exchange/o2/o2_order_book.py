@@ -16,10 +16,10 @@ class O2OrderBook(OrderBook):
     """
 
     @classmethod
-    def snapshot_message_from_exchange(cls,
-                                       msg: Dict[str, Any],
-                                       timestamp: float,
-                                       metadata: Optional[Dict] = None) -> OrderBookMessage:
+    def snapshot_rest_message_from_exchange(cls,
+                                            msg: Dict[str, Any],
+                                            timestamp: float,
+                                            metadata: Optional[Dict] = None) -> OrderBookMessage:
         if metadata:
             msg.update(metadata)
 
@@ -72,59 +72,49 @@ class O2OrderBook(OrderBook):
         return OrderBookMessage(OrderBookMessageType.SNAPSHOT, content, timestamp=timestamp)
 
     @classmethod
-    def diff_message_from_exchange(cls,
-                                   msg: Dict[str, Any],
-                                   timestamp: Optional[float] = None,
-                                   metadata: Optional[Dict] = None) -> OrderBookMessage:
+    def snapshot_ws_message_from_exchange(cls,
+                                          msg: Dict[str, Any],
+                                          timestamp: float,
+                                          metadata: Optional[Dict] = None) -> OrderBookMessage:
         if metadata:
             msg.update(metadata)
 
-        # Extract order changes from O2 WebSocket message
-        orders = msg.get("orders", {})
-        update_id = int((timestamp or 0) * 1000)
+        view = msg.get("view", {})
+        update_id = msg.get("timestamp", int(timestamp * 1000))
 
-        # Get trading pair to determine decimals
         trading_pair = msg.get("trading_pair", "")
         connector = msg.get("connector")
 
+        if not trading_pair:
+            raise ValueError(f"Missing trading_pair in order book snapshot message: {msg}")
+
         if trading_pair and connector:
             base_asset, quote_asset = trading_pair.split("-")
-            # Try to get decimals from connector (dynamic) first
             amount_decimals = connector.get_asset_decimals(base_asset)
             price_decimals = connector.get_asset_decimals(quote_asset)
         elif trading_pair:
             base_asset, quote_asset = trading_pair.split("-")
-            # Fallback to constants if connector not available
             amount_decimals = CONSTANTS.ASSETS_DECIMALS_MAP.get(base_asset, CONSTANTS.DEFAULT_ASSET_DECIMALS)
             price_decimals = CONSTANTS.ASSETS_DECIMALS_MAP.get(quote_asset, CONSTANTS.DEFAULT_ASSET_DECIMALS)
         else:
-            # Fallback to defaults if trading pair not found
             amount_decimals = CONSTANTS.DEFAULT_ASSET_DECIMALS
             price_decimals = CONSTANTS.DEFAULT_ASSET_DECIMALS
 
-        # Process bid changes (O2 uses signed quantities)
         bids = []
-        for order in orders.get("buys", []):
+        for order in view.get("buys", []):
             try:
-                # Convert from scaled integers using asset-specific decimals
                 price = float(order["price"]) / (10 ** price_decimals)
                 quantity = float(order["quantity"]) / (10 ** amount_decimals)
-                # O2 diff protocol: positive = add/update, negative/zero = remove
-                final_quantity = quantity if quantity > 0 else 0
-                bids.append(OrderBookRow(price, final_quantity, update_id))
+                bids.append(OrderBookRow(price, quantity, update_id))
             except (KeyError, ValueError, TypeError):
                 continue
-
-        # Process ask changes (O2 uses signed quantities)
         asks = []
-        for order in orders.get("sells", []):
+        for order in view.get("sells", []):
             try:
                 # Convert from scaled integers using asset-specific decimals
                 price = float(order["price"]) / (10 ** price_decimals)
                 quantity = float(order["quantity"]) / (10 ** amount_decimals)
-                # O2 diff protocol: positive = add/update, negative/zero = remove
-                final_quantity = quantity if quantity > 0 else 0
-                asks.append(OrderBookRow(price, final_quantity, update_id))
+                asks.append(OrderBookRow(price, quantity, update_id))
             except (KeyError, ValueError, TypeError):
                 continue
 
@@ -133,6 +123,29 @@ class O2OrderBook(OrderBook):
             "update_id": update_id,
             "bids": bids,
             "asks": asks
+        }
+
+        return OrderBookMessage(OrderBookMessageType.SNAPSHOT, content, timestamp=timestamp)
+
+    @classmethod
+    def diff_message_from_exchange(cls,
+                                   msg: Dict[str, Any],
+                                   timestamp: Optional[float] = None,
+                                   metadata: Optional[Dict] = None) -> OrderBookMessage:
+        '''
+        We do not expect this method to be called as we will be subscribing to order book snapshots with a data refresh rate of 100ms. As a result we are returning empty bids and asks so that the order book state is not updated. This is done this way for the sake of completion.
+        '''
+        if metadata:
+            msg.update(metadata)
+
+        trading_pair = msg.get("trading_pair", "")
+        update_id = int((timestamp or 0) * 1000)
+
+        content = {
+            "trading_pair": trading_pair,
+            "update_id": update_id,
+            "bids": [],
+            "asks": []
         }
 
         return OrderBookMessage(OrderBookMessageType.DIFF, content, timestamp=timestamp)
@@ -147,7 +160,7 @@ class O2OrderBook(OrderBook):
             "action": "subscribe_trades",
             "market_id": "0x...",  // hex-encoded Bytes32
             "trade": {
-                "trade_id": 12345,    // TradeId (number)
+                "trade_id": "000.../00000..",    // str: maker_id/taker_id (bytes32/bytes32)
                 "side": "Buy" or "Sell",  // Side enum
                 "total": 75000000,    // u128: quantity * price
                 "quantity": 1500000,  // u64: scaled quantity
@@ -164,9 +177,14 @@ class O2OrderBook(OrderBook):
             msg.update(metadata)
 
         # Extract trade data from O2 message
+        # This is compatible with both rest and websocket formats.
         trade_data = msg.get("trade", msg.get("trades", {}))
         if isinstance(trade_data, list) and trade_data:
-            trade_data = trade_data[0]  # Take first trade if multiple
+            # Take first trade if there are multiple as this is the most recent
+            trade_data = trade_data[0]
+        elif isinstance(trade_data, list):
+            # Empty list case
+            trade_data = {}
 
         # Parse trade information
         timestamp = trade_data.get("timestamp", msg.get("timestamp", 0))
